@@ -49,7 +49,6 @@ def run_test(file, tests=[])
   print "choose one: "
   input = $stdin.gets.chomp
   abort if input == "q"
-  puts input.green
 
   if /^\d+$/ =~ input
     tests = run_test_class(tests, input, file); run_test(file, tests)
