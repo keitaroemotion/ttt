@@ -45,6 +45,7 @@ def run_test(file, tests=[])
     command   = "ruby -I test #{file} -n #{test_name}"
     puts command
     system command
+    run_test(file, tests)
   else  
     run_test(file, tests.select{|f| regex(input.split(" ")) =~ f })
   end  
