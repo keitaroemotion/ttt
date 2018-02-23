@@ -27,6 +27,7 @@ def run_test_class(tests, input, file)
   command   = "ruby -I test #{file} -n #{test_name}"
   puts command.gsub(test_name, test_name.blue)
   system command
+  tests
 end
 
 def run_test(file, tests=[])
@@ -54,6 +55,9 @@ def run_test(file, tests=[])
     tests = run_test_class(tests, input, file); run_test(file, tests)
   elsif /^[\d\s]+$/ =~ input
     input.split(" ").each { |i| run_test_class(tests, i, file) }; run_test(file, tests)
+  elsif input == "@"
+    command = "ruby -I test #{file}"
+    puts command; system command; run_test(file, tests)
   else  
     run_test(file, tests.select{|f| regex(input.split(" ")) =~ f })
   end  
