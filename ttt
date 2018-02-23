@@ -1,0 +1,79 @@
+#!/usr/bin/env ruby
+
+#
+# ttt is the tool to enables you the better 
+# experience in testing.
+#
+
+def collect_files(regex, dir)
+  dir.select { |file| regex =~ file }
+end
+
+def all_files
+  Dir["./**/*"].select {|f| f.end_with?("_test.rb") }
+end
+
+def regex(args)
+  Regexp.new(args.select{|a| !a.start_with?("-") }.join(".+"))
+end
+
+def show(files)
+  files[0..10].each_with_index { |file, i| puts("[#{i}] #{file}") }
+end
+
+def run_test(file, tests=[])
+  if tests.empty?
+    tests = File
+              .open(file, "r")
+              .each_line
+              .to_a
+              .select{ |l| /^\s+(it|test)\s\"/ =~ l }
+              .map {|l| l.gsub(/\s+(it|test)\s\"/, "").gsub(/"\sdo\s*/, "").gsub(" ", "_")}
+    if tests.empty?
+      abort("file: #{file} does not have any tests")
+    end
+  end            
+
+  tests.each_with_index do |test, i|
+    puts "[#{i}] #{test}"
+  end
+  print "choose one: "
+  input = $stdin.gets.chomp
+
+  if /^\d+$/ =~ input
+    test_name = tests[input.to_i].gsub("(", "\\(").gsub(")", "\\)")
+    command   = "ruby -I test #{file} -n #{test_name}"
+    puts command
+    system command
+  else  
+    run_test(file, tests.select{|f| regex(input.split(" ")) =~ f })
+  end  
+end
+
+def let_user_choose_test(regex, files)
+  key_word_input = ""
+  unless regex
+    print "enter key words: "
+    key_word_input = $stdin.gets
+    regex          = regex(key_word_input.split(" "))
+  end  
+
+  if /^\d$/ =~ key_word_input
+    files = [files[key_word_input.to_i]]
+  else  
+    files = collect_files(regex, files)
+  end
+
+  puts "matches: #{files.size} files"
+  if    files.size == 1
+    run_test(files[0])
+  elsif files.size == 0
+    puts "files matches regex: #{regex} not found"
+    let_user_choose_test(nil, all_files)
+  else
+    show(files)
+    let_user_choose_test(nil, files)
+  end
+end
+
+let_user_choose_test(regex(ARGV), all_files)
